@@ -1,0 +1,21 @@
+[plugin]
+name = "echo_judge"
+version = "1.0.0"
+type = "judge"
+author = "AgentEval Team"
+description = "Simple echo judge for testing - returns fixed scores"
+entry_point = "echo_judge.plugin:EchoJudgePlugin"
+min_agenteval_version = "0.1.0"
+
+[config]
+schema = """
+{
+  "type": "object",
+  "properties": {
+    "fixed_score": {"type": "number", "default": 0.8, "minimum": 0, "maximum": 1}
+  }
+}
+"""
+
+[dependencies]
+python_packages = []
