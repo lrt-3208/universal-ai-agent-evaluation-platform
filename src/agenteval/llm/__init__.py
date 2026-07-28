@@ -23,18 +23,16 @@ class LLMClientRegistry(Registry[LLMClient]):
         if name not in cls._registry:
             from agenteval.core.exceptions import AgentEvalException
             raise AgentEvalException(
-                code=40601,
                 message=f"Unknown LLM client: '{name}'. Available: {list(cls._registry.keys())}",
-                http_status=400,
+                code=40601,
             )
         client_cls = cls._registry[name]
         client = client_cls(config or {})
         if not client.validate_config(config or {}):
             from agenteval.core.exceptions import AgentEvalException
             raise AgentEvalException(
-                code=40602,
                 message=f"Invalid LLM client config for '{name}'",
-                http_status=400,
+                code=40602,
             )
         return client
 

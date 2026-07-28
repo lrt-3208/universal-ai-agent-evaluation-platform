@@ -101,6 +101,14 @@ class EvaluationRunner:
                 ]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
 
+                # Respect cancellation: cancel API may have set terminal state while
+                # scenarios were running — do not overwrite it
+                session.expire_all()
+                current = await eval_repo.get_by_id(evaluation_id)
+                if current and current.status == "cancelled":
+                    logger.info("evaluation.cancelled_during_run", evaluation_id=str(evaluation_id))
+                    return
+
                 # Aggregate results
                 failed_count = sum(1 for r in results if isinstance(r, Exception) or r is None)
                 if failed_count == len(results):
@@ -148,6 +156,9 @@ class EvaluationRunner:
                 try:
                     exec_repo = ScenarioExecutionRepository(session)
                     await exec_repo.update_status(exec_id, "running")
+                    # Commit immediately: holding the row lock across the (potentially
+                    # long) agent network call would block cancel's skip_pending UPDATE
+                    await session.commit()
 
                     # Load scenario
                     scenario_repo = ScenarioRepository(session)

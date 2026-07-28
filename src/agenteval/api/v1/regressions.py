@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agenteval.core.database import get_session
@@ -140,6 +140,7 @@ async def get_regression(
 async def replay_evaluation(
     evaluation_id: UUID,
     request: ReplayRequest,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
 ):
     """数据集回放.
@@ -153,6 +154,12 @@ async def replay_evaluation(
         name=request.name,
     )
     await session.commit()
+
+    # Schedule runner (was missing: replayed evaluations stayed pending forever)
+    from agenteval.core.database import async_session_factory
+    from agenteval.services.runner import EvaluationRunner
+    runner = EvaluationRunner(async_session_factory)
+    background_tasks.add_task(runner.run_evaluation, new_eval_id)
 
     return ReplayResponse(
         evaluation_id=new_eval_id,

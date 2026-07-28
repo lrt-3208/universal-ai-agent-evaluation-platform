@@ -90,9 +90,8 @@ class JudgeRegistry(Registry[Judge]):
         if name not in cls._registry:
             from agenteval.core.exceptions import AgentEvalException
             raise AgentEvalException(
-                code=40601,
                 message=f"Unknown judge type: '{name}'. Available: {list(cls._registry.keys())}",
-                http_status=400,
+                code=40601,
             )
         judge_cls = cls._registry[name]
         return judge_cls(**kwargs)
