@@ -5,6 +5,14 @@ Listens on port 9001. Uses real LLM (qwen) if available, else echoes.
 import os
 import time
 
+# Use OS trust store (corporate TLS proxy breaks certifi verification)
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 

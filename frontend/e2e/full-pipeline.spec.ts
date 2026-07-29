@@ -103,6 +103,8 @@ test('AC-E2E-01/02: UI 完整走通建库→评测→评分', async ({ page }) =
   await page.getByRole('button', { name: '确 定' }).click();
   await expect(page.locator('.ant-message')).toContainText('创建成功');
 
+  // 创建后列表需 refetch（多 spec 连跑时偶发延迟，显式等待）
+  await expect(page.locator('td a', { hasText: DS })).toBeVisible({ timeout: 15_000 });
   await page.locator('td a', { hasText: DS }).click();
   await page.getByTestId('batch-create-btn').click();
   const rows = [
@@ -132,8 +134,14 @@ test('AC-E2E-01/02: UI 完整走通建库→评测→评分', async ({ page }) =
   await page.getByTestId('exec-row-link').first().click();
   await expect(page.getByTestId('conversation')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('judge-results-section')).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByTestId('judge-result-card')).toHaveCount(2);
-  await page.keyboard.press('Escape');
+  const cards = page.getByTestId('judge-result-card');
+  await expect(cards).toHaveCount(2);
+  // 关键：两张卡都必须真正产出评分（此前只断言卡片数量，
+  // 导致 LLM Judge 因 TLS 失败静默返回空指标时被漏过 — 实测踩坑）
+  await expect(cards.filter({ hasText: 'rule' })).toContainText(/\d\.\d{2}/);
+  await expect(cards.filter({ hasText: 'llm' })).toContainText(/\d\.\d{2}/);
+  await expect(page.getByTestId('metric-score-row').first()).toBeVisible();
+  await page.locator('.ant-drawer-close').click();
 });
 
 test('AC-E2E-03: 生成 HTML 报告并在 UI 预览', async ({ page }) => {

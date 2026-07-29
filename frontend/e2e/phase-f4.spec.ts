@@ -136,6 +136,9 @@ test('AC-F4-03/04: 评分卡按 Judge 分组展示，reasoning 可展开', async
   await expect(cards).toHaveCount(2);
   await expect(cards.filter({ hasText: 'rule' }).first()).toBeVisible();
   await expect(cards.filter({ hasText: 'llm' }).first()).toBeVisible();
+  // 两张卡都必须真正产出评分（防 LLM Judge 静默失败返回空指标）
+  await expect(cards.filter({ hasText: 'rule' })).toContainText(/\d\.\d{2}/);
+  await expect(cards.filter({ hasText: 'llm' })).toContainText(/\d\.\d{2}/);
 
   // 动态指标行存在
   await expect(page.getByTestId('metric-score-row').first()).toBeVisible();

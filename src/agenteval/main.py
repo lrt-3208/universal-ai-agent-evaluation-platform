@@ -2,6 +2,16 @@
 
 from contextlib import asynccontextmanager
 
+# Use OS trust store for TLS verification (corporate TLS-inspection proxies
+# are not in certifi's bundle, which breaks outbound LLM calls with
+# CERTIFICATE_VERIFY_FAILED). Optional: skip silently if not installed.
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:  # pragma: no cover
+    pass
+
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
